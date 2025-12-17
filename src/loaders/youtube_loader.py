@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
+from typing import List, Optional
 
 @dataclass(frozen=True)
 class TranscriptLine:
@@ -15,7 +16,7 @@ class YouTubeTranscriptLoader:
 
     def load(self, video_id: str) -> List[TranscriptLine]:
         try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript_list = YouTubeTranscriptApi().list(video_id)
 
             # Prefer manually created transcript if available
             transcript = None
