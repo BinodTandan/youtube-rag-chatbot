@@ -3,7 +3,7 @@ from typing import List
 
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
-from langchain.Documents import Document
+from langchain_core.documents import Document
 
 
 def _persist_dir_for_video(video_id: str) -> str:
