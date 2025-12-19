@@ -10,3 +10,4 @@ tiktoken
 youtube-transcript-api
 python-dotenv
 langchain-text-splitters
+langchain_chroma
