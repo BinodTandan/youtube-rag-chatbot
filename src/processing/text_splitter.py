@@ -1,6 +1,8 @@
 from typing import List
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from src.utils.helpers import extract_video_id
+from src.loaders.youtube_loader import YouTubeTranscriptLoader
 
 
 def transcript_to_documents(video_id: str, lines: list) -> List[Document]:
@@ -10,7 +12,7 @@ def transcript_to_documents(video_id: str, lines: list) -> List[Document]:
                 docs.append(
                         Document(
                                 page_content=line.text,
-                                metadata={'video_id': video_id, 'start': line.start}
+                                metadata={'video_id': video_id, 'start': line.start, 'duration': line.duration}
                         )
                 )
         return docs
@@ -25,3 +27,6 @@ def chunk_documents(
                 chunk_overlap=chunk_overlap
         )
         return splitter.split_documents(docs)
+
+
+
