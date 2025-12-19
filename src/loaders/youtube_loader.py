@@ -28,9 +28,9 @@ class YouTubeTranscriptLoader:
             items = transcript.fetch()
             lines: List[TranscriptLine] = []
             for it in items:
-                text = (it.get("text") or "").replace("\n", " ").strip()
-                start = float(it.get("start") or 0.0)
-                duration = float(it.get("duration") or 0.0)
+                text = it.text.replace("\n", " ").strip()
+                start = float(it.start)
+                duration = float(it.duration)
                 if text:
                     lines.append(TranscriptLine(text=text, start=start, duration=duration))
             return lines
