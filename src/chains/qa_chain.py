@@ -1,50 +1,53 @@
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains.retrieval import create_retrieval_chain
-from langchain_core.documents import Document
-from typing import List
-
-QA_PROMPT = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            "You are a YouTube video assistant. "
-            "Answer ONLY using the provided transcript context. "
-            "If the answer is not in the context, say: "
-            "'I don't know based on the transcript.'"
-        ),
-        (
-            "human",
-            "Context:\n{context}\n\nQuestion: {input}"
-        ),
-    ]
-)
-
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from typing import Any
 
 def make_qa_chain(
         vectorstore,
         model_name: str = "gpt-4o-mini",
         k: int = 5
-) -> List[Document]:
+) -> Any:
     """
-    Build a modern RAG chain using: retriever → document chain → LLM    
-    """
-    retriever = vectorstore.as_retriever(search_kwargs={"k":k})
+    Explicit RAG pipeline:
+    query → retriever → context → prompt → LLM → string
+    """ 
+    retriever = vectorstore.as_retriever(search_type="mmr", search_kwargs={"k":k, "lambda_mult": 0.5})
     
-    llm = ChatOpenAI(
+    model = ChatOpenAI(
         model = model_name,
-        temperature=0
+        temperature=0,
     )
 
-    document_chain = create_stuff_documents_chain(
-        llm=llm,
-        prompt= QA_PROMPT
+    parser = StrOutputParser()
+
+    # Prompt Template
+    prompt = PromptTemplate(
+        input_variables=["context", "question"],
+        template=(
+            "You are a helpful assistant.\n"
+            "Answer ONLY using the transcript context.\n"
+            "If the context is insufficient, say \"I don't know.\".\n\n"
+            "Context:\n{context}\n\n"
+            "Question: {question}\n"
+            "Answer:"
+        ),
     )
 
-    rag_chain = create_retrieval_chain(
-        retriever=retriever,
-        combine_docs_chain=document_chain,
+    #Document -> content string
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+    
+    parallel_chain = RunnableParallel(
+        {"context": retriever | RunnableLambda(format_docs),
+        "question": RunnablePassthrough(),
+        }
     )
 
-    return rag_chain
+    final_chain = parallel_chain | prompt | model | parser
+
+    return final_chain
+
+
+
