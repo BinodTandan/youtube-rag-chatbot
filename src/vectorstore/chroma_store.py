@@ -1,9 +1,14 @@
 import os
 from typing import List
+from dotenv import load_dotenv
 
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
+from src.utils.helpers import extract_video_id
+from src.loaders.youtube_loader import YouTubeTranscriptLoader
+from src.processing.text_splitter import transcript_to_documents, chunk_documents
+load_dotenv()
 
 
 def _persist_dir_for_video(video_id: str) -> str:
@@ -43,3 +48,6 @@ def build_or_load_chroma(video_id:str, docs: List[Document]) -> Chroma:
         collection_name=f"yt_{video_id}",
         persist_directory=persist_dir
     )
+
+
+
